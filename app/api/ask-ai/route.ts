@@ -50,35 +50,63 @@ export async function POST(request: NextRequest) {
 
     const bill = campaign.medical_bills;
 
-    // Build context from database data only
+    // Build context from database data only - be explicit about what exists
+    const itemsData = bill?.items && Array.isArray(bill.items) && bill.items.length > 0
+      ? JSON.stringify(bill.items, null, 2)
+      : "No line items available in database";
+    
     const context = `
-CAMPAIGN INFORMATION:
+CAMPAIGN INFORMATION (from database):
 - Campaign ID: ${campaign.id}
 - Goal Amount: $${campaign.goal_amount}
 - Amount Raised: $${campaign.amount_raised}
-- Is Funded: ${campaign.is_funded}
-- Reason for Help: ${campaign.reason || "Not provided"}
+- Is Funded: ${campaign.is_funded ? "Yes" : "No"}
+- Reason for Help: ${campaign.reason || "[No reason provided]"}
 - Created: ${campaign.created_at}
 
-MEDICAL BILL INFORMATION:
-- Patient Name: ${bill?.patient_name || "Not available"}
-- Patient DOB: ${bill?.patient_dob || "Not available"}
-- Provider Name: ${bill?.provider_name || "Not available"}
-- Provider Address: ${bill?.provider_address || "Not available"}
-- Service Date: ${bill?.service_date || "Not available"}
-- Total Amount: $${bill?.total_amount || "Not available"}
-- Items: ${bill?.items ? JSON.stringify(bill.items, null, 2) : "Not available"}
+MEDICAL BILL INFORMATION (from database):
+- Patient Name: ${bill?.patient_name || "[Not in database]"}
+- Patient DOB: ${bill?.patient_dob || "[Not in database]"}
+- Provider Name: ${bill?.provider_name || "[Not in database]"}
+- Provider Address: ${bill?.provider_address || "[Not in database]"}
+- Service Date: ${bill?.service_date || "[Not in database]"}
+- Total Amount: $${bill?.total_amount || "[Not in database]"}
+- Line Items: ${itemsData}
 `;
 
-    const systemPrompt = `You are a helpful assistant that provides information about crowdfunding campaigns for medical bills. 
+    const systemPrompt = `You are a factual information assistant for medical bill crowdfunding campaigns. Your ONLY job is to report exactly what is in the database - nothing more, nothing less.
 
-CRITICAL RULES:
-1. ONLY use the information provided in the context below
-2. DO NOT make up, infer, or assume any information not explicitly in the database
-3. If information is not available in the context, say "This information is not available in the campaign data"
-4. Stay strictly within the bounds of the provided database information
-5. Be helpful and clear, but never speculate or add details not in the data
-6. Focus on answering questions about the patient's situation, the medical bill, and the campaign status
+ABSOLUTE RULES - NO EXCEPTIONS:
+1. ONLY state facts that are explicitly written in the context below
+2. NEVER infer, assume, or add details not explicitly stated
+3. NEVER combine information from different fields to create new facts
+4. If asked about something not in the context, respond: "This information is not available in the campaign data"
+5. If the items field shows "No line items available", do NOT describe what services were provided
+6. If a date is shown, use it exactly as provided - do not interpret or add context
+7. Do NOT summarize or rephrase the reason field - quote it directly if relevant
+8. ALWAYS structure your response in an organized, easy-to-read format
+
+RESPONSE FORMATTING REQUIREMENTS:
+- Use clear sections with headers (## for main sections, ### for subsections)
+- Use bullet points for lists of information
+- Group related information together
+- Use bold text for key facts (e.g., **Patient Name:** Sarah Thompson)
+- Keep responses concise but well-organized
+- If presenting multiple pieces of information, use a structured format like:
+
+## Campaign Status
+- **Goal Amount:** $X
+- **Amount Raised:** $Y
+- **Progress:** Z%
+
+## Patient Information
+- **Name:** [from database]
+- **Service Date:** [from database]
+
+Example of what NOT to do:
+- If items are "No line items available", do NOT say "office visit and lab tests"
+- If reason mentions "appendectomy", do NOT add details about what that involves
+- Only state: "The reason provided is: [exact text from reason field]"
 
 Context:
 ${context}`;

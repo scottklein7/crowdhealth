@@ -125,6 +125,97 @@ export function AIChatModal({ campaignId, isOpen, onClose }: AIChatModalProps) {
     }
   };
 
+  const renderMarkdown = (text: string) => {
+    // Split by lines to process markdown
+    const lines = text.split("\n");
+    const elements: React.ReactElement[] = [];
+    let currentList: string[] = [];
+    let key = 0;
+
+    const flushList = () => {
+      if (currentList.length > 0) {
+        elements.push(
+          <ul key={key++} className="list-disc list-inside space-y-1 my-2">
+            {currentList.map((item, idx) => {
+              const parts = item.split(/(\*\*.*?\*\*)/g);
+              const formattedContent = parts.map((part, partIdx) => {
+                if (part.startsWith("**") && part.endsWith("**")) {
+                  return <strong key={partIdx}>{part.slice(2, -2)}</strong>;
+                }
+                return part;
+              });
+              return (
+                <li key={idx} className="text-sm">
+                  {formattedContent}
+                </li>
+              );
+            })}
+          </ul>
+        );
+        currentList = [];
+      }
+    };
+
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim();
+
+      // Headers
+      if (trimmed.startsWith("### ")) {
+        flushList();
+        elements.push(
+          <h3 key={key++} className="text-base font-semibold mt-3 mb-2">
+            {trimmed.slice(4)}
+          </h3>
+        );
+      } else if (trimmed.startsWith("## ")) {
+        flushList();
+        elements.push(
+          <h2 key={key++} className="text-lg font-bold mt-4 mb-2">
+            {trimmed.slice(3)}
+          </h2>
+        );
+      } else if (trimmed.startsWith("# ")) {
+        flushList();
+        elements.push(
+          <h1 key={key++} className="text-xl font-bold mt-4 mb-2">
+            {trimmed.slice(2)}
+          </h1>
+        );
+      }
+      // Bullet points
+      else if (trimmed.startsWith("- ")) {
+        const content = trimmed.slice(2);
+        currentList.push(content);
+      }
+      // Regular paragraphs with bold
+      else if (trimmed) {
+        flushList();
+        const parts = trimmed.split(/(\*\*.*?\*\*)/g);
+        const formattedContent = parts.map((part, partIdx) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={partIdx}>{part.slice(2, -2)}</strong>;
+          }
+          return part;
+        });
+        elements.push(
+          <p key={key++} className="text-sm my-1">
+            {formattedContent}
+          </p>
+        );
+      } else {
+        // Empty line - flush list and add spacing
+        flushList();
+        if (idx < lines.length - 1) {
+          elements.push(<br key={key++} />);
+        }
+      }
+    });
+
+    flushList();
+
+    return <div>{elements}</div>;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -161,7 +252,13 @@ export function AIChatModal({ campaignId, isOpen, onClose }: AIChatModalProps) {
                       : "bg-muted"
                   )}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <div className="text-sm prose prose-sm max-w-none">
+                      {renderMarkdown(message.content)}
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  )}
                 </div>
               </div>
             ))}
