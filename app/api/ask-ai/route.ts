@@ -1,8 +1,9 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Replicate from "replicate";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const maxDuration = 300;
+export const dynamic = "force-dynamic";
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
@@ -14,9 +15,9 @@ export async function POST(request: NextRequest) {
     const { campaignId, query } = body;
 
     if (!campaignId || !query) {
-      return new Response(
-        JSON.stringify({ error: "Campaign ID and query are required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+      return NextResponse.json(
+        { error: "Campaign ID and query are required" },
+        { status: 400 }
       );
     }
 
@@ -41,9 +42,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (campaignError || !campaign) {
-      return new Response(
-        JSON.stringify({ error: "Campaign not found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+      return NextResponse.json(
+        { error: "Campaign not found" },
+        { status: 404 }
       );
     }
 
@@ -135,9 +136,9 @@ ${context}`;
     });
   } catch (error) {
     console.error("Ask AI error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Failed to process request" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to process request" },
+      { status: 500 }
     );
   }
 }
