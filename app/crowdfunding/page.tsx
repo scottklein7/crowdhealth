@@ -1,11 +1,20 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { getCrowdfundingCampaigns } from "@/lib/supabase";
+import { getCrowdfundingCampaigns, type CrowdfundingCampaign } from "@/lib/supabase";
 import { Heart } from "lucide-react";
 import { CampaignCard } from "@/components/campaign-card";
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+
 export default async function CrowdfundingPage() {
   // Fetch campaigns that are not yet funded
-  const campaigns = await getCrowdfundingCampaigns(false);
+  let campaigns: CrowdfundingCampaign[] = [];
+  try {
+    campaigns = await getCrowdfundingCampaigns(false);
+    console.log("Fetched campaigns:", campaigns.length);
+  } catch (error) {
+    console.error("Error fetching campaigns:", error);
+  }
 
   return (
     <div className="min-h-screen bg-white">
