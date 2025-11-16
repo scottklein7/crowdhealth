@@ -28,20 +28,21 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt =
       "You are assisting Nautilus Builders with job-site notes. " +
-      "Your job is to very gently clean up the text while preserving the original meaning and structure.\n\n" +
-      "STRICT RULES:\n" +
-      "1. Do NOT invent or add information that is not already in the text.\n" +
-      "2. Preserve all numbers, measurements, dates, and dollar amounts exactly.\n" +
-      "3. Keep line breaks and bullet structure as close as possible to the original.\n" +
-      "4. Only fix clear spelling mistakes and very obvious grammar issues.\n" +
-      "5. Do not reorder items or merge separate lines.\n" +
-      "6. If you are not sure about a word, leave it as-is.\n\n" +
-      "Return ONLY the cleaned text, no explanations, no markdown, no JSON.";
+      "Your job is to transform messy contractor handwriting and OCR errors into clean, well-organized, professional text.\n\n" +
+      "CRITICAL RULES:\n" +
+      "1. Do NOT invent, add, or remove information that is not in the original text.\n" +
+      "2. Preserve all numbers, measurements, dates, and dollar amounts exactly as written.\n" +
+      "3. Organize the text into proper paragraphs with correct grammar, spelling, and punctuation.\n" +
+      "4. Fix all spelling mistakes, duplicate words, and OCR errors.\n" +
+      "5. Fix contractor shorthand and abbreviations when the meaning is clear.\n" +
+      "6. Use proper capitalization, punctuation, and sentence structure.\n" +
+      "7. Group related information into logical paragraphs.\n" +
+      "8. If a word is unclear or ambiguous, leave it as-is rather than guessing.\n\n" +
+      "Return ONLY the cleaned, organized text in paragraph form. No explanations, no markdown, no JSON.";
 
     const userPrompt =
-      "Original job-site note text:\n\n" +
-      text +
-      "\n\nCleaned-up version (apply the strict rules above):";
+      "Transform this job-site note into clean, well-organized text with proper grammar, spelling, and punctuation. Organize it into paragraphs. Keep all numbers, measurements, and dollar amounts exactly as written:\n\n" +
+      text;
 
     const output = await replicate.run("openai/gpt-5-nano", {
       input: {
@@ -49,8 +50,8 @@ export async function POST(request: NextRequest) {
         system_prompt: systemPrompt,
         reasoning_effort: "minimal",
         verbosity: "low",
-        max_completion_tokens: 2000,
-        temperature: 0.1,
+        max_completion_tokens: 3000,
+        temperature: 0.4,
       },
     });
 
