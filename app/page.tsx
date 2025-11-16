@@ -9,7 +9,7 @@ export default function Home() {
       <main className="relative isolate overflow-hidden">
         {/* Top hero band with Nautilus colors */}
         <div className="relative">
-          <div className="h-[320px] w-full bg-[#15486b]">
+          <div className="h-[470px] md:h-[320px] w-full bg-[#15486b]">
             <div className="container mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <div className="flex bg-white items-center justify-center rounded-full  p-3 shadow-md shadow-black/20">
                 <Image
